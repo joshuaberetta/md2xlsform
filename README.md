@@ -5,7 +5,7 @@ Convert Markdown to XLSForm for importing into KoBo
 ## Setup
 ```
 chmod +x md2xlsform.py
-sudo ln -s $(pwd)/md2xlsform.py /usr/local/bin
+sudo ln -s $(pwd)/md2xlsform.py /usr/local/bin/md2xlsform
 ```
 
 ## Usage
