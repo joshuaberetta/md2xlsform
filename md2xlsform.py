@@ -44,17 +44,15 @@ def slice_into_sheets(file_content):
 def get_dict_of_df_sheets(sheets):
     updated_sheets = {}
     for sheet_name, table in sheets.items():
-        columns, _, content = table[0], table[1], table[2:]
-        content = strip_empty(content)
-
+        columns, _, *content = table
         list_cols = get_list_of_cells(columns)
-        list_content = get_list_of_cells(content)
+        list_content = get_list_of_cells(strip_empty(content))
 
-        all_content = []
-        for line in list_content:
-            all_content.append({k: v for k, v in zip(list_cols, line)})
-
+        all_content = [
+            {k: v for k, v in zip(list_cols, line)} for line in list_content
+        ]
         updated_sheets[sheet_name] = pd.DataFrame(all_content)
+
     return updated_sheets
 
 
@@ -90,8 +88,8 @@ def main():
     args = parser.parse_args()
 
     cwd = os.getcwd()
-    in_file = f'{cwd}/{args.input}'
-    out_file = f'{cwd}/{args.output}'
+    in_file = os.path.join(cwd, args.input)
+    out_file = os.path.join(cwd, args.output)
     if not out_file.endswith('.xlsx'):
         out_file = f'{out_file}.xlsx'
 
