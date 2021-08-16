@@ -7,9 +7,9 @@ Convert Markdown to XLSForm for importing into KoBo.
 git clone https://github.com/joshuaberetta/md2xlsform
 cd md2xlsform
 pip3 install -r requirements.txt
+chmod +x md2xlsform.py
 
 # optional
-chmod +x md2xlsform.py
 sudo ln -s $(pwd)/md2xlsform.py /usr/local/bin/md2xlsform
 ```
 
