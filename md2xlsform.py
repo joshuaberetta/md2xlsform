@@ -10,24 +10,25 @@ import pandas as pd
 """
 %% survey
 
-| type                   | name  | label          |
-| ---                    | ---   | ---            |
-| text                   | hello | hello world    |
-| select_one fields      | field | Select a field |
-| select_multiple fields | field | Select fields  |
+| type             | name | label                        |
+| ---              | ---  | ---                          |
+| text             | name | What is your name?           |
+| integer          | age  | How old are you?             |
+| select_one foods | food | What is your favourite meal? |
 
 %% choices
 
-| list_name | name | label |
-| ---       | ---  | ---   |
-| fields    | a    | A     |
-| fields    | b    | B     |
+| list_name | name  | label |
+| ---       | ---   | ---   |
+| foods     | pasta | Pasta |
+| foods     | pizza | Pizza |
+| foods     | sushi | Sushi |
 
 %% settings
 
-| form_title        |
-| ---               |
-| A brave new world |
+| form_title |
+| ---        |
+| Basics     |
 """
 
 
