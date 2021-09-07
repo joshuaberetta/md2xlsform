@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import json
 import os
 
 import pandas as pd
@@ -70,30 +71,105 @@ def get_list_of_cells(content):
     return [get_cells(line) for line in content]
 
 
-def to_excel(in_file, out_file):
+def get_sheet_from_json(content, sheet):
+    _sheet = []
+    for item in content[sheet]:
+        new_item = {}
+        for k, v in item.items():
+            if k.startswith('$') or k == 'select_from_list_name':
+                continue
+            if k in content['translated']:
+                for val, trans in zip(v, content['translations']):
+                    new_item[f'{k}:{trans}'] = val
+                continue
+            new_item[k] = v
+
+        if 'type' in item and item['type'] in ['select_one', 'select_multiple']:
+            new_item['type'] = f"{item['type']} {item['select_from_list_name']}"
+
+        _sheet.append(new_item)
+
+    return _sheet
+
+
+def order_sheet(sheet_dict, sheet_name):
+    df = pd.DataFrame(sheet_dict)
+    cols = list(df.columns)
+    if sheet_name == 'survey':
+        cols.remove('type')
+        cols = ['type'] + cols
+        return df[cols]
+    elif sheet_name == 'choices':
+        cols.remove('list_name')
+        cols = ['list_name'] + cols
+        return df[cols]
+    return df
+
+
+def from_md(in_file):
     with open(in_file, 'r') as f:
         xlsform = f.read()
-
     sheets_dict = slice_into_sheets(xlsform)
-    sheets_df = get_dict_of_df_sheets(sheets_dict)
+    return get_dict_of_df_sheets(sheets_dict)
 
+
+def from_json(in_file):
+    with open(in_file, 'r') as f:
+        content = json.loads(f.read())
+
+    sheets = ['survey', 'choices', 'settings']
+    project = {}
+    for sheet in sheets:
+        if not sheet in content or not content[sheet]:
+            continue
+        if sheet in ['survey', 'choices']:
+            project[sheet] = order_sheet(
+                get_sheet_from_json(content, sheet), sheet
+            )
+        else:
+            project[sheet] = order_sheet(content[sheet], sheet)
+
+    return project
+
+
+def to_excel(project, out_file):
     with pd.ExcelWriter(out_file) as writer:
-        for sheet_name, df in sheets_df.items():
+        for sheet_name, df in project.items():
             df.to_excel(writer, sheet_name=sheet_name, index=False)
+
+
+def to_md(project, out_file):
+    out = []
+    for k, v in project.items():
+        out.append(f'%% {k}')
+        out.append(v.to_markdown(index=False, tablefmt='github'))
+
+    with open(out_file, 'w') as f:
+        f.write('\n\n'.join(out))
+
 
 def main():
     parser = argparse.ArgumentParser(description='Convert Markdown to XLSForm')
-    parser.add_argument('--input', '-i', type=str, help='Input markdown file')
-    parser.add_argument('--output', '-o', type=str, help='Output XLSForm file')
+    parser.add_argument('--input', '-i', type=str, help='Input file, either md or json')
+    parser.add_argument('--output', '-o', type=str, help='Output XLSForm, either xlsx or md')
     args = parser.parse_args()
 
     cwd = os.getcwd()
     in_file = os.path.join(cwd, args.input)
     out_file = os.path.join(cwd, args.output)
-    if not out_file.endswith('.xlsx'):
+
+    if not out_file.split('.')[-1] in ['xlsx', 'md']:
         out_file = f'{out_file}.xlsx'
 
-    to_excel(in_file, out_file)
+    if in_file.endswith('.md'):
+        project = from_md(in_file)
+    elif in_file.endswith('.json'):
+        project = from_json(in_file)
+
+    if out_file.endswith('.xlsx'):
+        to_excel(project, out_file)
+    elif out_file.endswith('.md'):
+        to_md(project, out_file)
 
 
 if __name__ == '__main__':
