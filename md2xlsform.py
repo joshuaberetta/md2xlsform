@@ -81,7 +81,7 @@ def get_sheet_from_json(content, sheet):
                 continue
             if k in content['translated']:
                 for val, trans in zip(v, content['translations']):
-                    new_item[f'{k}:{trans}'] = val
+                    new_item[f'{k}::{trans}'] = val
                 continue
             new_item[k] = v
 
