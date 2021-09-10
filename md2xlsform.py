@@ -32,10 +32,10 @@ import pandas as pd
 """
 
 
-def slice_into_sheets(file_content):
+def slice_into_sheets(file_content, sep='%%'):
     list_of_sheets = [
         strip_empty(x.split('\n'))
-        for x in strip_empty(file_content.split('%%'))
+        for x in strip_empty(file_content.split(sep))
     ]
     sheets = {}
     for sheet in list_of_sheets:
@@ -107,11 +107,15 @@ def order_sheet(sheet_dict, sheet_name):
     return df
 
 
-def from_md(in_file):
+def from_md(in_file, sep='%%'):
     with open(in_file, 'r') as f:
         xlsform = f.read()
-    sheets_dict = slice_into_sheets(xlsform)
+    sheets_dict = slice_into_sheets(xlsform, sep=sep)
     return get_dict_of_df_sheets(sheets_dict)
+
+
+def from_excel(in_file):
+    return pd.read_excel(in_file, index_col=None, sheet_name=None)
 
 
 def from_json(in_file):
@@ -139,38 +143,62 @@ def to_excel(project, out_file):
             df.to_excel(writer, sheet_name=sheet_name, index=False)
 
 
-def to_md(project, out_file):
+def to_md(project, out_file, sep='%%'):
     out = []
     for k, v in project.items():
-        out.append(f'%% {k}')
+        out.append(f'{sep} {k}')
         out.append(v.to_markdown(index=False, tablefmt='github'))
 
     with open(out_file, 'w') as f:
         f.write('\n\n'.join(out))
 
 
+def _get_extension(filename):
+    return filename.split('.')[-1]
+
+
 def main():
     parser = argparse.ArgumentParser(description='Convert Markdown to XLSForm')
-    parser.add_argument('--input', '-i', type=str, help='Input file, either md or json')
-    parser.add_argument('--output', '-o', type=str, help='Output XLSForm, either xlsx or md')
+    parser.add_argument(
+        '--input', '-i', type=str, help='Input file, either md, xlsx or json'
+    )
+    parser.add_argument(
+        '--output', '-o', type=str, help='Output XLSForm, either xlsx or md'
+    )
+    parser.add_argument(
+        '--input-separator',
+        '-is',
+        type=str,
+        default='%%',
+        help='Markdown sheet separator character',
+    )
+    parser.add_argument(
+        '--output-separator',
+        '-os',
+        type=str,
+        default='%%',
+        help='Markdown sheet separator character',
+    )
     args = parser.parse_args()
 
     cwd = os.getcwd()
     in_file = os.path.join(cwd, args.input)
     out_file = os.path.join(cwd, args.output)
 
-    if not out_file.split('.')[-1] in ['xlsx', 'md']:
+    if not _get_extension(out_file) in ['xlsx', 'md']:
         out_file = f'{out_file}.xlsx'
 
     if in_file.endswith('.md'):
-        project = from_md(in_file)
+        project = from_md(in_file, sep=args.input_separator)
+    if _get_extension(in_file) in ['xls', 'xlsx']:
+        project = from_excel(in_file)
     elif in_file.endswith('.json'):
         project = from_json(in_file)
 
     if out_file.endswith('.xlsx'):
         to_excel(project, out_file)
     elif out_file.endswith('.md'):
-        to_md(project, out_file)
+        to_md(project, out_file, sep=args.output_separator)
 
 
 if __name__ == '__main__':
