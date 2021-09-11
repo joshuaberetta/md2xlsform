@@ -80,7 +80,12 @@ def get_sheet_from_json(content, sheet):
             if k.startswith('$') or k == 'select_from_list_name':
                 continue
             if k in content['translated']:
-                if len(content['translated']) == len(content['translations']):
+                if (
+                    len(content['translated']) == len(content['translations'])
+                ) and not (
+                    len(content['translations']) == 1
+                    and content['translations'][0] is None
+                ):
                     for val, trans in zip(v, content['translations']):
                         new_item[f'{k}::{trans}'] = val
                 else:
