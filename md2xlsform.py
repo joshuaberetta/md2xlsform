@@ -80,8 +80,11 @@ def get_sheet_from_json(content, sheet):
             if k.startswith('$') or k == 'select_from_list_name':
                 continue
             if k in content['translated']:
-                for val, trans in zip(v, content['translations']):
-                    new_item[f'{k}::{trans}'] = val
+                if len(content['translated']) == len(content['translations']):
+                    for val, trans in zip(v, content['translations']):
+                        new_item[f'{k}::{trans}'] = val
+                else:
+                    new_item[k] = v[0]
                 continue
             new_item[k] = v
 
@@ -132,7 +135,7 @@ def from_json(in_file):
                 get_sheet_from_json(content, sheet), sheet
             )
         else:
-            project[sheet] = order_sheet(content[sheet], sheet)
+            project[sheet] = order_sheet([content[sheet]], sheet)
 
     return project
 
