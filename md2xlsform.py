@@ -155,6 +155,7 @@ def to_md(project, out_file, sep='%%'):
     out = []
     for k, v in project.items():
         out.append(f'{sep} {k}')
+        v = v.fillna('')
         out.append(v.to_markdown(index=False, tablefmt='github'))
 
     with open(out_file, 'w') as f:
